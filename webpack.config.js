@@ -3,6 +3,7 @@ module.exports = {
     output: {
         path:     'builds',
         filename: 'bundle.js',
+        publicPath:    'builds/',
     },
     devServer: {
       hot: true,
