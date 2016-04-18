@@ -1,4 +1,8 @@
+var production = process.env.NODE_ENV === 'production';
+
 module.exports = {
+    debug:   !production,
+    devtool: production ? false : 'eval',
     entry:  './src',
     output: {
         path:     'builds',
