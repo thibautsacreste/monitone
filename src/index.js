@@ -1,8 +1,16 @@
-import * as lib from 'highland';
+import _ from 'highland';
 
-const socket = new WebSocket("ws://127.0.0.1:9090/");
+function messageSource(webSocketUrl) {
+  return _(function (push, next) {
+      console.log(`Connecting to ${webSocketUrl}`);
+      const socket = new WebSocket(webSocketUrl);
+      socket.onmessage = message => {
+        push(null, message);
+      }
+  });
+};
 
-socket.onmessage = function (event) {
-  const data = JSON.parse(event.data);
-  console.log(data);
-}
+messageSource("ws://127.0.0.1:9090/")
+  .pluck('data')
+  .map(JSON.parse)
+  .each(x => console.log(x))
