@@ -22,6 +22,6 @@
     "webpack-dev-server": "^1.14.1"
   },
   "dependencies": {
-    "highland": "^2.7.4"
+    "highland": "^2.8.1"
   }
 }
