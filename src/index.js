@@ -69,11 +69,11 @@ const reqPerSec = _.seq(
 const avgRespTime = _.seq(
   _.pluck('request_time'),
   _.map(t => 1000 * parseFloat(t)),
-  _.batchWithTimeOrCount(1000, Number.MAX_SAFE_INTEGER),
-  _.map(arr => arr.reduce((a, b) => a + b) / arr.length)
+  timeWindow(1000),
+  _.map(arr => arr.length? arr.reduce((a, b) => a + b) / arr.length : 0)
 );
 
-dummySource()
+// dummySource()
   // .through(timeWindow(1000))
   // .batchWithTimeOrCount(1000, Number.MAX_SAFE_INTEGER)
   // .pluck('length')
@@ -83,17 +83,17 @@ dummySource()
 messageSource("ws://127.0.0.1:9090/")
   .pluck('data')
   .map(JSON.parse)
-  .through(reqPerSec)
-  .each(x => console.log(`req/sec: ${x}`))
-  // .through(
-  //   multicast([
-  //     s => {
-  //       s.through(reqPerSec)
-  //        .each(x => console.log(`req/sec: ${x}`))
-  //     },
-  //     s => {
-  //       s.through(avgRespTime)
-  //        .each(x => console.log(`response time: ${x}`))
-  //     }
-  //   ])
-  // );
+  // .through(reqPerSec)
+  // .each(x => console.log(`req/sec: ${x}`))
+  .through(
+    multicast([
+      s => {
+        s.through(reqPerSec)
+         .each(x => console.log(`req/sec: ${x}`))
+      },
+      s => {
+        s.through(avgRespTime)
+         .each(x => console.log(`response time: ${x}`))
+      }
+    ])
+  );
