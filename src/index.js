@@ -1,6 +1,9 @@
 import _ from 'highland';
 import { _timeWindow, _slidingTimeWindow } from './highland-ext';
 
+const timeWindow = 10000;
+const timeStep = 1000;
+
 function messageSource(webSocketUrl) {
   return _(function (push, next) {
       console.log(`Connecting to ${webSocketUrl}`);
@@ -11,17 +14,21 @@ function messageSource(webSocketUrl) {
   });
 };
 
+const _movingAverage = (windowMs, intervalMs) => _.seq(
+  _slidingTimeWindow(windowMs, intervalMs),
+  _.map(a => a.length ? a.reduce((x, y) => x + y) / a.length : 0)
+);
+
 const reqPerSec = _.seq(
-  _slidingTimeWindow(10000, 1000),
+  _slidingTimeWindow(timeWindow, timeStep),
   _.pluck('length'),
-  _.map(l => l/10)
+  _.map(l => l*1000/timeWindow)
 );
 
 const avgRespTime = _.seq(
   _.pluck('request_time'),
   _.map(t => 1000 * parseFloat(t)),
-  _slidingTimeWindow(10000, 1000),
-  _.map(a => a.length? a.reduce((x, y) => x + y) / a.length : 0)
+  _movingAverage(timeWindow, timeStep)
 );
 
 const requests = messageSource("ws://127.0.0.1:9090/")
