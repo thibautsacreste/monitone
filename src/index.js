@@ -1,6 +1,8 @@
 import _ from 'highland';
+import Tone from 'tone';
 import { _timeWindow, _slidingTimeWindow } from './highland-ext';
 
+const webSockerUrl = "ws://127.0.0.1:9090/";
 const timeWindow = 10000;
 const timeStep = 1000;
 
@@ -13,6 +15,14 @@ function messageSource(webSocketUrl) {
       }
   });
 };
+
+const linearScale = ([a, b], [c, d]) => {
+  return (x) => {
+    if (x <= a) return c;
+    if (x >= b) return d;
+    return c + (d - c) * (x - a) / (b - a)
+  }
+}
 
 const _movingAverage = (windowMs, intervalMs) => _.seq(
   _slidingTimeWindow(windowMs, intervalMs),
@@ -31,16 +41,39 @@ const avgRespTime = _.seq(
   _movingAverage(timeWindow, timeStep)
 );
 
-const requests = messageSource("ws://127.0.0.1:9090/")
+// Make some noise
+const synth = new Tone.PluckSynth().toMaster();
+let note = 440;
+Tone.Transport.bpm.value = 120;
+Tone.Transport.scheduleRepeat(
+  (time) => {
+    synth.triggerAttackRelease(note, "8n");
+  },
+  "4n"
+);
+Tone.Transport.start();
+
+const requests = messageSource(webSockerUrl)
   .pluck('data')
   .map(JSON.parse);
 
 requests
   .fork()
   .through(reqPerSec)
-  .each(x => console.log(`req/sec: ${x}`));
+  .tap(x => console.log(`req/sec: ${x}`))
+  .map(linearScale([0, 2000], [80, 180]))
+  .tap(x => console.log(`bpm: ${x}`))
+  .each(x => {
+    Tone.Transport.bpm.value = x;
+  });
+
 
 requests
   .fork()
   .through(avgRespTime)
-  .each(x => console.log(`response time: ${x}`));
+  .tap(x => console.log(`response time: ${x}`))
+  .map(linearScale([50, 2000], [494, 65]))
+  .tap(x => console.log(`frequency: ${x}`))
+  .each(x => {
+    note = x;
+  });
