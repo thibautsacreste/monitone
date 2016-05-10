@@ -12,14 +12,15 @@ function messageSource(webSocketUrl) {
 };
 
 const reqPerSec = _.seq(
-  _timeWindow(1000),
-  _.pluck('length')
+  _slidingTimeWindow(10000, 1000),
+  _.pluck('length'),
+  _.map(l => l/10)
 );
 
 const avgRespTime = _.seq(
   _.pluck('request_time'),
   _.map(t => 1000 * parseFloat(t)),
-  _timeWindow(1000),
+  _slidingTimeWindow(10000, 1000),
   _.map(a => a.length? a.reduce((x, y) => x + y) / a.length : 0)
 );
 
