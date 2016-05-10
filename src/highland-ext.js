@@ -1,6 +1,6 @@
 import _ from 'highland';
 
-const slidingTimeWindow = _.curry(function(windowMs, intervalMs, source) {
+const slidingTimeWindow = (windowMs, intervalMs, source) => {
   let batched = [],
       ended = false,
       interval,
@@ -33,9 +33,9 @@ const slidingTimeWindow = _.curry(function(windowMs, intervalMs, source) {
       next();
     }
   });
-});
+};
 
-export const _slidingTimeWindow = slidingTimeWindow;
+export const _slidingTimeWindow = _.curry(slidingTimeWindow);
 export const _timeWindow = _.curry(function(ms, source) {
-  return _slidingTimeWindow(ms, ms, source);
+  return slidingTimeWindow(ms, ms, source);
 });
