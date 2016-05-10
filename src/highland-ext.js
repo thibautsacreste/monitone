@@ -1,21 +1,23 @@
 import _ from 'highland';
 
-export const timeWindow = _.curry(function(ms, source) {
+const slidingTimeWindow = _.curry(function(windowMs, intervalMs, source) {
   let batched = [],
       ended = false,
       interval,
       pushFn = () => {};
 
   const flush = () => {
-    pushFn(null, batched);
-    batched = [];
+    const windowStart = Date.now() - windowMs;
+    const startIndex = batched.findIndex(([, t]) => t >= windowStart);
+    batched = startIndex == -1 ? [] : batched.slice(startIndex);
+    pushFn(null, batched.map(a => a[0]));
     if (ended) {
       pushFn(null, nil);
       clearInterval(interval);
     }
   }
 
-  interval = setInterval(flush, ms);
+  interval = setInterval(flush, intervalMs);
 
   return source.consume(function (err, x, push, next) {
     pushFn = push;
@@ -27,8 +29,13 @@ export const timeWindow = _.curry(function(ms, source) {
       ended = true;
     }
     else {
-      batched.push(x);
+      batched.push([x, Date.now()]);
       next();
     }
   });
+});
+
+export const _slidingTimeWindow = slidingTimeWindow;
+export const _timeWindow = _.curry(function(ms, source) {
+  return _slidingTimeWindow(ms, ms, source);
 });

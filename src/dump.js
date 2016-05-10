@@ -39,5 +39,4 @@ dummySource()
   .through(timeWindow(1000))
   .batchWithTimeOrCount(1000, Number.MAX_SAFE_INTEGER)
   .pluck('length')
-  .each(_.log)
-  .each(x => console.log(`req/sec: ${x}`));
+  .each(_.log);

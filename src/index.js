@@ -1,5 +1,5 @@
 import _ from 'highland';
-import { timeWindow } from './highland-ext';
+import { _timeWindow, _slidingTimeWindow } from './highland-ext';
 
 function messageSource(webSocketUrl) {
   return _(function (push, next) {
@@ -12,14 +12,14 @@ function messageSource(webSocketUrl) {
 };
 
 const reqPerSec = _.seq(
-  timeWindow(1000),
+  _timeWindow(1000),
   _.pluck('length')
 );
 
 const avgRespTime = _.seq(
   _.pluck('request_time'),
   _.map(t => 1000 * parseFloat(t)),
-  timeWindow(1000),
+  _timeWindow(1000),
   _.map(a => a.length? a.reduce((x, y) => x + y) / a.length : 0)
 );
 
